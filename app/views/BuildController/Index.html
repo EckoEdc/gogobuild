@@ -1,0 +1,67 @@
+{{set . "title" "Builds Index"}}
+{{template "header.html" .}}
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                <img alt="GoGo Build" src="">
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="">
+            {{template "flash.html" .}}
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                {{with .project}}
+                <form class="form-inline" action="/projects/{{.Name}}/build/" method="post">
+                    <a href="/projects/{{.Name}}/builds">{{.Name}}</a>
+                    <select class="form-control" name="sys">
+                        {{range $key, $value := .Configuration.BuildInstructions}}
+                        <option value="{{$key}}">{{$key}}</option>
+                        {{end}}
+                        <option value="all">all</option>
+                    </select>
+                    <select class="form-control" name="commit">
+                        <option value="master">master</option>
+                        {{range .ReviewManagerInstance.GetOpenChanges}}
+                        <option value="{{.}}">{{.}}</option>
+                        {{end}}
+                        <option value="updateWorker">Update Builder</option>
+                    </select>
+                    <input class="btn btn-success" type="submit" value="Build" />
+                </form>
+                {{end}}
+            </div>
+        </div>
+        <table class="table">
+            <th>Date</th>
+            <th>Duration</th>
+            <th>Refs</th>
+            <th>State</th>
+
+            {{range .builds}}
+            <tr class="">
+                <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date}}</a></td>
+                <td>{{.Duration}}</td>
+                <td>{{.Commit}}</td>
+                <td>{{.State}}</td>
+                {{if .IsDownloadable}}
+                <td><input class="btn btn-primary" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/download';" value="Download" /></td>
+                {{end}}
+                {{if .IsRetryable}}
+                <td><input class="btn btn-warning" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/retry';" value="Retry" /></td>
+                {{end}}
+            </tr>
+            {{end}}
+        </table>
+    </div>
+</div>
+{{template "footer.html" .}}

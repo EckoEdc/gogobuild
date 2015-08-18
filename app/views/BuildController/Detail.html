@@ -1,0 +1,48 @@
+{{set . "title" "Builds Detail"}}
+{{template "header.html" .}}
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                <img alt="GoGo Build" src="">
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="span6">
+            {{template "flash.html" .}}
+        </div>
+    </div>
+    <div>
+        <div class="panel panel-primary">
+            <div class="panel-body">
+                Project : {{.build.ProjectToBuild.Name}}
+                <br/>
+                Date : {{.build.Date}}
+                <br/>
+                Sys: {{.build.TargetSys}}
+                <br/>
+                State : {{.build.State}}
+                <br/>
+                Commit : {{.build.Commit}}
+                <br/>
+                {{if .build.IsDownloadable}}
+                <input class="btn btn-primary" type="button" onclick="location.href='/projects/{{.build.ProjectToBuild.Name}}/builds/{{.build.ID.Hex}}/download';" value="Download" />
+                {{end}}
+                {{if .build.IsRetryable}}
+                <input class="btn btn-warning" type="button" onclick="location.href='/projects/{{.build.ProjectToBuild.Name}}/builds/{{.build.ID.Hex}}/retry';" value="Retry" />
+                {{end}}
+            </div>
+        </div>
+
+        <div>
+            Logs : <pre class=".pre-scrollable">{{nl2br .logContent}}</pre>
+        </div>
+    </div>
+</div>
+
+{{template "footer.html" .}}
