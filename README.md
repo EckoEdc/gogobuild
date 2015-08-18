@@ -1,6 +1,6 @@
 # GoGo Build
 
-GoGo Build is a packaging system designed to be light and resilient.
+GoGo Build is a build/packaging system designed to be light and resilient.
 
 # Setup
  go get github.com/EckoEdc/gogobuild
@@ -14,5 +14,5 @@ GoGo Build is a packaging system designed to be light and resilient.
 
  go to http://localhost:9000 with your favorite browser
 
- *Note There is still a lot of work to do on this, consider it early alpha.
+ *Note: There is still a lot of work to do on this, consider it early alpha.
  All comments and pull request are welcome*
