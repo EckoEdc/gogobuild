@@ -3,13 +3,14 @@
 GoGo Build is a build/packaging system designed to be light and resilient.
 
 # Setup
- -Dependencies
-    go get github.com/fsouza/go-dockerclient
-    go get gopkg.in/mgo.v2
-    go get golang.org/x/build/gerrit
-    
- -Project
- go get github.com/EckoEdc/gogobuild
+ 
+ Dependencies
+ * go get github.com/fsouza/go-dockerclient
+ * go get gopkg.in/mgo.v2
+ * go get golang.org/x/build/gerrit
+ 
+Project
+ * go get github.com/EckoEdc/gogobuild
 
 # Project Setup
  Just clone your project in public/project and make a .packer.json describing
