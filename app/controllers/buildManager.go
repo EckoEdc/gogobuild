@@ -128,12 +128,12 @@ func (b *BuildManager) newBuild(projectName string, sys string, commit string) *
 	var build Build
 	if sys == "all" {
 		for sysToBuild := range project.Configuration.BuildInstructions {
-			build = Build{Date: time.Now(), ProjectToBuild: project, TargetSys: sysToBuild, State: Created, Commit: commit}
+			build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sysToBuild, State: Created, Commit: commit}
 			WMInstance().Build(&build)
 			b.saveBuild(&build)
 		}
 	} else {
-		build = Build{Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit}
+		build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit}
 		WMInstance().Build(&build)
 		b.saveBuild(&build)
 	}
