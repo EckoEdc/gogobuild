@@ -1,13 +1,13 @@
 package controllers
 
 import (
+	"archive/tar"
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -39,7 +39,6 @@ func (d *DockerWorker) Start() error {
 	var err error
 
 	//Create log file
-	//TODO: the output dir should be created by the worker manager
 	d.outputDir = fmt.Sprintf("%s/public/output/%s/%d/%s", revel.BasePath, d.build.ProjectToBuild.Name, d.build.Date.Unix(), d.build.TargetSys)
 	os.MkdirAll(d.outputDir, 0777)
 	d.logFile, err = os.Create(d.outputDir + "/logs.txt")
@@ -70,28 +69,34 @@ func (d *DockerWorker) Start() error {
 // TODO: Fix this (e.g should not be a cmd call but use the api used everywhere else)
 func (d *DockerWorker) buildImage() error {
 
-	cmd := exec.Command("docker", "build", "-t", fmt.Sprintf(d.imageName, "fallback"), revel.BasePath+"/public/projects/"+d.build.ProjectToBuild.Name+"/docker/"+d.build.TargetSys)
-	output := &bytes.Buffer{}
-	cmd.Stdout = output
-
-	err := cmd.Start()
+	t := time.Now()
+	inputbuf, outputbuf := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+	file, err := os.Open(revel.BasePath + "/public/projects/" + d.build.ProjectToBuild.Name + "/docker/" + d.build.TargetSys + "/Dockerfile")
 	if err != nil {
+		d.logFile.WriteString(err.Error())
+		return err
+	}
+	defer file.Close()
+	fileContent, err := ioutil.ReadAll(file)
+	if err != nil {
+		d.logFile.WriteString(err.Error())
+		return err
+	}
+	tr := tar.NewWriter(inputbuf)
+	tr.WriteHeader(&tar.Header{Name: "Dockerfile", Size: int64(len(fileContent)), ModTime: t, AccessTime: t, ChangeTime: t})
+	tr.Write(fileContent)
+	tr.Close()
+
+	opts := docker.BuildImageOptions{
+		Name:           fmt.Sprintf(d.imageName, "fallback"),
+		RmTmpContainer: true,
+		InputStream:    inputbuf,
+		OutputStream:   outputbuf,
+	}
+	if err := d.docker.BuildImage(opts); err != nil {
 		log.Println(err)
 	}
-
-	ticker := time.NewTicker(time.Second)
-	go func(ticker *time.Ticker) {
-		for _ = range ticker.C {
-			if len(output.Bytes()) > 0 {
-				log.Println(output)
-				_, err = io.Copy(d.logFile, output)
-				output.Reset()
-			}
-		}
-	}(ticker)
-
-	cmd.Wait()
-	ticker.Stop()
+	d.logFile.Write(outputbuf.Bytes())
 
 	d.startBuild()
 	return nil
@@ -99,6 +104,8 @@ func (d *DockerWorker) buildImage() error {
 
 //Build the docker image
 func (d *DockerWorker) startBuild() error {
+
+	defer d.logFile.Close()
 
 	if d.build.Commit == "updateWorker" {
 		d.commitToFallback = true
@@ -112,9 +119,9 @@ func (d *DockerWorker) startBuild() error {
 	err := d.tryUpdate()
 	if err != nil {
 		useFallbackImage = true
-		d.logFile.WriteString("\nUpdate Image failed falling back\n")
+		d.logFile.WriteString("\n\n---Update Image failed falling back---\n")
 	} else {
-		d.logFile.WriteString("\nUsing updated image\n")
+		d.logFile.WriteString("\n\n---Using updated image---\n")
 	}
 
 	//Don't build the project if that's an update build
@@ -123,7 +130,7 @@ func (d *DockerWorker) startBuild() error {
 		err = d.buildProject(useFallbackImage)
 		if err != nil && useFallbackImage == false {
 			//Last chance to make it work
-			d.logFile.WriteString("\nBuild with updated image failed, falling back...\n")
+			d.logFile.WriteString("\n\n---Build with updated image failed, falling back...---\n")
 			useFallbackImage = true
 			err = d.buildProject(useFallbackImage)
 		}
@@ -139,17 +146,19 @@ func (d *DockerWorker) startBuild() error {
 		}
 	}
 	BMInstance().UpdateBuild(&d.build)
-
-	defer d.logFile.Close()
-
 	return nil
 }
 
 func (d *DockerWorker) tryUpdate() error {
+	//Start time
+	start := time.Now()
+
 	var cmds []string
 	cmds = append(cmds, "bash")
 	cmds = append(cmds, "-c")
 	cmds = append(cmds, strings.Join(d.build.ProjectToBuild.Configuration.UpdateInstructions[d.targetSys], " && "), d.build.Commit)
+	d.logFile.WriteString(strings.Join(cmds, "\n"))
+	d.logFile.WriteString("\n\n ---UPDATE OUTPUT---- \n")
 
 	config := &docker.Config{
 		AttachStdin:  false,
@@ -171,13 +180,33 @@ func (d *DockerWorker) tryUpdate() error {
 		return err
 	}
 
+	logOptions := docker.LogsOptions{
+		Stdout:       true,
+		Stderr:       true,
+		Timestamps:   true,
+		Container:    container.ID,
+		OutputStream: d.logFile,
+		ErrorStream:  d.logFile,
+	}
+
 	err = d.docker.StartContainer(container.ID, hostConfig)
 	if err != nil {
 		d.logFile.WriteString("\n" + err.Error())
 		log.Println(err)
 		return err
 	}
+	//Wait for the container
 	retValue, err := d.docker.WaitContainer(container.ID)
+
+	errLog := d.docker.Logs(logOptions)
+	if errLog != nil {
+		log.Println(errLog.Error())
+	}
+
+	//Set the update duration even if it failed
+	d.build.UpdateWorkerDuration = time.Now().Sub(start)
+	BMInstance().UpdateBuild(&d.build)
+
 	if retValue != 0 || err != nil {
 		d.destroy(container.ID)
 		return errors.New("Update Failed")
@@ -190,7 +219,7 @@ func (d *DockerWorker) tryUpdate() error {
 	if d.commitToFallback == true {
 		suffix = "fallback"
 	}
-	_, err = d.docker.CommitContainer(docker.CommitContainerOptions{Container: container.ID, Repository: fmt.Sprintf("gogobuild/%s", strings.ToLower(d.targetSys)), Tag: suffix})
+	_, err = d.docker.CommitContainer(docker.CommitContainerOptions{Container: container.ID, Repository: fmt.Sprintf("gogobuild/%s_%s", d.build.ProjectToBuild.Name, strings.ToLower(d.targetSys)), Tag: suffix})
 	d.destroy(container.ID)
 	return err
 }

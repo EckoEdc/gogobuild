@@ -1,15 +1,8 @@
 package controllers
 
 import (
-	"archive/tar"
-	"fmt"
-	"io"
 	"log"
-	"os"
-	"path/filepath"
 	"time"
-
-	"github.com/revel/revel"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -49,13 +42,14 @@ func (s State) String() string {
 
 //Build represent a build
 type Build struct {
-	ID             bson.ObjectId `bson:"_id,omitempty"`
-	Date           time.Time
-	LastUpdated    time.Time
-	ProjectToBuild Project
-	TargetSys      string
-	State          State
-	Commit         string
+	ID                   bson.ObjectId `bson:"_id,omitempty"`
+	Date                 time.Time
+	LastUpdated          time.Time
+	ProjectToBuild       Project
+	TargetSys            string
+	State                State
+	Commit               string
+	UpdateWorkerDuration time.Duration
 }
 
 //IsDownloadable return true if downloadable
@@ -81,6 +75,9 @@ func (b *Build) IsRetryable() bool {
 func (b *Build) Duration() time.Duration {
 	if b.LastUpdated.IsZero() {
 		return 0
+	}
+	if b.State == Building || b.State == Init {
+		return time.Now().Sub(b.Date)
 	}
 	return b.LastUpdated.Sub(b.Date)
 }
@@ -108,29 +105,39 @@ func BMInstance() *BuildManager {
 }
 
 //CreateOrReturnStatusBuild create or return status of requested build
-func (b *BuildManager) CreateOrReturnStatusBuild(projectName string, sys string, commit string) (State, error) {
-	if commit == "master" || commit == "updateWorker" {
-		return Created, b.NewBuild(projectName, sys, commit)
-	}
-	c := b.session.DB("gogobuild").C("builds")
-	var build = new(Build)
-	err := c.Find(bson.M{"projecttobuild.name": projectName, "targetsys": sys, "commit": commit}).One(build)
-	if err != nil && err.Error() == "not found" {
-		return Created, b.NewBuild(projectName, sys, commit)
-	} else if build.State == Fail {
-		b.RetryBuild(build)
-	}
-	return build.State, err
+func (b *BuildManager) CreateOrReturnStatusBuild(projectName string, sys string, commit string) (*Build, error) {
+	//FIXME: This logic is flawed
+	// if commit == "master" || commit == "updateWorker" {
+	// 	return b.newBuild(projectName, sys, commit), nil
+	// }
+	// c := b.session.DB("gogobuild").C("builds")
+	// var build = new(Build)
+	// err := c.Find(bson.M{"projecttobuild.name": projectName, "targetsys": sys, "commit": commit}).One(build)
+	// if err != nil && err.Error() == "not found" {
+	// 	b.newBuild(projectName, sys, commit)
+	// } else if build.State == Fail {
+	// 	b.RetryBuild(build)
+	// }
+	return b.newBuild(projectName, sys, commit), nil
 }
 
 //NewBuild create a build and gives it to WorkerManager
-func (b *BuildManager) NewBuild(projectName string, sys string, commit string) error {
+func (b *BuildManager) newBuild(projectName string, sys string, commit string) *Build {
 	project := PMInstance().GetProjectByName(projectName)
 	project.Reload()
-	build := Build{Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit}
-	WMInstance().Build(&build)
-	b.SaveBuild(&build)
-	return nil
+	var build Build
+	if sys == "all" {
+		for sysToBuild := range project.Configuration.BuildInstructions {
+			build = Build{Date: time.Now(), ProjectToBuild: project, TargetSys: sysToBuild, State: Created, Commit: commit}
+			WMInstance().Build(&build)
+			b.saveBuild(&build)
+		}
+	} else {
+		build = Build{Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit}
+		WMInstance().Build(&build)
+		b.saveBuild(&build)
+	}
+	return &build
 }
 
 //RetryBuild that failed
@@ -163,13 +170,9 @@ func (b *BuildManager) GetBuildByID(id string) (*Build, error) {
 
 //UpdateBuild in DB
 func (b *BuildManager) UpdateBuild(build *Build) error {
-	// TODO: Tar the output/project dir (e.g targetsys all case)
-	/*	if build.State > Fail {
-		b.PackOutput(build, true)
-	}*/
 	c := b.session.DB("gogobuild").C("builds")
 	err := c.Update(bson.M{"projecttobuild.name": build.ProjectToBuild.Name, "date": build.Date},
-		bson.M{"$set": bson.M{"state": build.State, "lastupdated": time.Now()}})
+		bson.M{"$set": bson.M{"state": build.State, "lastupdated": time.Now(), "updateworkerduration": build.UpdateWorkerDuration}})
 	if err != nil {
 		log.Println(err)
 	}
@@ -177,7 +180,7 @@ func (b *BuildManager) UpdateBuild(build *Build) error {
 }
 
 //SaveBuild in DB
-func (b *BuildManager) SaveBuild(build *Build) error {
+func (b *BuildManager) saveBuild(build *Build) error {
 	c := b.session.DB("gogobuild").C("builds")
 	err := c.Insert(build)
 	if err != nil {
@@ -193,62 +196,4 @@ func (b *BuildManager) BuildMaintenance() error {
 	_, err := c.UpdateAll(bson.M{"state": bson.M{"$in": []State{Created, Init, Building}}},
 		bson.M{"$set": bson.M{"state": Fail}})
 	return err
-}
-
-//PackOutput : tar the content of the output build directory
-func (b *BuildManager) PackOutput(build *Build, excludeLogs bool) error {
-	outputDir := fmt.Sprintf("%s/public/output/%s/%d", revel.BasePath, build.ProjectToBuild.Name, build.Date.Unix())
-	dir, err := os.Open(outputDir)
-	if err != nil {
-		return err
-	}
-	defer dir.Close()
-	files, err := dir.Readdir(0) // grab the files list
-	if err != nil {
-		return err
-	}
-	tarfile, err := os.Create(fmt.Sprintf("%s/%s%d.tar", outputDir, build.ProjectToBuild.Name, build.Date.Unix()))
-	if err != nil {
-		return err
-	}
-	defer tarfile.Close()
-	var fileWriter io.WriteCloser = tarfile
-	tarfileWriter := tar.NewWriter(fileWriter)
-	defer tarfileWriter.Close()
-	for _, fileInfo := range files {
-
-		if fileInfo.IsDir() {
-			continue
-		}
-
-		file, err := os.Open(dir.Name() + string(filepath.Separator) + fileInfo.Name())
-		if err != nil {
-			return err
-		}
-
-		defer file.Close()
-
-		//Don't include logs if we didn't ask for it
-		if excludeLogs == true && file.Name() == "logs.txt" {
-			continue
-		}
-
-		// prepare the tar header
-		header := new(tar.Header)
-		header.Name = file.Name()
-		header.Size = fileInfo.Size()
-		header.Mode = int64(fileInfo.Mode())
-		header.ModTime = fileInfo.ModTime()
-
-		err = tarfileWriter.WriteHeader(header)
-		if err != nil {
-			return err
-		}
-
-		_, err = io.Copy(tarfileWriter, file)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

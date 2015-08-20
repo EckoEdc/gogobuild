@@ -36,11 +36,16 @@
         ]},
     "UpdateInstructions" : {
         "Win32" : [
+            "sudo reflector --verbose --country 'Canada' -l 200 --sort rate --save /etc/pacman.d/mirrorlist",
             "yaourt -Syua --noconfirm"
         ]},
     "ReviewType": "Gerrit",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
     "Package" : {
         "Win32" : "ring-windows-nightly.exe"
-    }
+    },
+    "ReloadProjectCmd" : [
+        "git checkout packaging",
+        "git pull"
+    ]
 }

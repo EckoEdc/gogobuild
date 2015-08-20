@@ -22,13 +22,16 @@ func (pc ProjectsController) Index() revel.Result {
 
 //Build a project
 func (pc ProjectsController) Build() revel.Result {
-	state, _ := BMInstance().CreateOrReturnStatusBuild(pc.Params.Get("project"), pc.Params.Get("sys"), pc.Params.Get("commit"))
-	if state == Created {
+	build, _ := BMInstance().CreateOrReturnStatusBuild(pc.Params.Get("project"), pc.Params.Get("sys"), pc.Params.Get("commit"))
+	if build.State == Created {
 		pc.Flash.Success("Build Started %s %s", pc.Params.Get("project"), pc.Params.Get("sys"))
-	} else if state == Fail {
-		pc.Flash.Error(fmt.Sprintf("Build %s %s as state %s. Retrying...", pc.Params.Get("project"), pc.Params.Get("sys"), state.String()))
+	} else if build.State == Fail {
+		pc.Flash.Error(fmt.Sprintf("Build %s %s as state %s. Retrying...", pc.Params.Get("project"), pc.Params.Get("sys"), build.State.String()))
 	} else {
-		pc.Flash.Success("Build %s %s as state %s for refs %s. Nothing to do here.", pc.Params.Get("project"), pc.Params.Get("sys"), state.String(), pc.Params.Get("commit"))
+		pc.Flash.Success("Build %s %s as state %s for refs %s. Nothing to do here.", pc.Params.Get("project"), pc.Params.Get("sys"), build.State.String(), pc.Params.Get("commit"))
+	}
+	if pc.Params.Get("format") == "json" {
+		return pc.RenderJson(build)
 	}
 	return pc.Redirect("/projects/%s/builds", pc.Params.Get("project"))
 }

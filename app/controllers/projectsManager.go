@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/revel/revel"
 )
@@ -17,6 +18,7 @@ type ProjectConfiguration struct {
 	ReviewType         string
 	ReviewAddress      string
 	Package            map[string]string
+	ReloadProjectCmd   []string
 }
 
 //ReviewManager interface
@@ -33,34 +35,33 @@ type Project struct {
 }
 
 //Init configuration
-// TODO: Init and Reload are awfully alike...
 func (p *Project) Init(dir os.FileInfo) error {
-	file, err := os.Open(revel.BasePath + "/public/projects/" + dir.Name() + "/.packer.json")
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	defer file.Close()
-	return p.loadConf(file)
+	return p.loadConf(dir.Name())
 }
 
 //Reload configuration
 func (p *Project) Reload() error {
 	//TODO: we should git pull and reset before that to ensure configuration is up to date
-	file, err := os.Open(revel.BasePath + "/public/projects/" + p.Name + "/.packer.json")
+	for _, instr := range p.Configuration.ReloadProjectCmd {
+		cmd := exec.Command(instr)
+		cmd.Dir = revel.BasePath + "/public/projects/" + p.Name
+		cmd.Run()
+	}
+	return p.loadConf(p.Name)
+}
+
+//loadConf load the json conf (e.g .packer.json)
+func (p *Project) loadConf(fileName string) error {
+	file, err := os.Open(revel.BasePath + "/public/projects/" + fileName + "/.packer.json")
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 	defer file.Close()
-	return p.loadConf(file)
-}
 
-//loadConf load the json conf (e.g .packer.json)
-func (p *Project) loadConf(file *os.File) error {
 	decoder := json.NewDecoder(file)
 	p.Configuration = ProjectConfiguration{}
-	err := decoder.Decode(&p.Configuration)
+	err = decoder.Decode(&p.Configuration)
 	if err != nil {
 		log.Println(err)
 		return err

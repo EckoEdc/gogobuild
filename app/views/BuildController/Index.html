@@ -43,7 +43,8 @@
         </div>
         <table class="table">
             <th>Date</th>
-            <th>Duration</th>
+            <th>Build Duration</th>
+            <th>Update Duration</th>
             <th>Refs</th>
             <th>State</th>
 
@@ -51,6 +52,7 @@
             <tr class="">
                 <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date}}</a></td>
                 <td>{{.Duration}}</td>
+                <td>{{.UpdateWorkerDuration}}</td>
                 <td>{{.Commit}}</td>
                 <td>{{.State}}</td>
                 {{if .IsDownloadable}}

@@ -64,7 +64,6 @@ func (c BuildController) Download() revel.Result {
 		revel.ERROR.Println(err)
 		c.Flash.Error(err.Error())
 	}
-	//TODO: IF TargetSys == all return a tar of every package
 	outputAddr := fmt.Sprintf("/public/output/%s/%d/%s/%s", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
 	if c.Params.Get("format") == "json" {
 		return c.RenderJson(outputAddr)

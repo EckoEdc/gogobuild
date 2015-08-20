@@ -27,7 +27,7 @@ func WMInstance() *WorkerManager {
 //TODO: Implement a queue of builder to really manage something...
 func (w *WorkerManager) Build(build *Build) error {
 
-	var launchFunc func(build *Build, targetSys string)
+	var launchFunc func(build *Build, targetSys string) Worker
 
 	switch build.ProjectToBuild.Configuration.BuildType {
 	case "Docker":
@@ -36,21 +36,15 @@ func (w *WorkerManager) Build(build *Build) error {
 		build.State = Fail
 		return errors.New("Not a valid build type")
 	}
-
-	if build.TargetSys == "all" {
-		for sysToBuild := range build.ProjectToBuild.Configuration.BuildInstructions {
-			launchFunc(build, sysToBuild)
-		}
-	} else {
-		launchFunc(build, build.TargetSys)
-	}
+	launchFunc(build, build.TargetSys)
 	return nil
 }
 
-func (w *WorkerManager) launchDockerBuild(build *Build, targetSys string) {
+func (w *WorkerManager) launchDockerBuild(build *Build, targetSys string) Worker {
 	d := DockerWorker{
 		build:     *build,
 		targetSys: targetSys,
 	}
 	d.Start()
+	return &d
 }

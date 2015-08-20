@@ -20,7 +20,7 @@ func (g *GerritManager) Init(p *Project) {
 }
 
 //GetOpenChanges return open gerrit patchset for project
-//TODO: Use the Mergable property ??
+//TODO: Use the Mergable and title property ??
 func (g *GerritManager) GetOpenChanges() ([]string, error) {
 	query := fmt.Sprintf("project:%s status:open", g.project)
 	changes, err := g.gerritClient.QueryChanges(query, gerrit.QueryChangesOpt{N: 0, Fields: []string{"ALL_REVISIONS"}})
