@@ -1,0 +1,10 @@
+*TODO LIST
+
+* Write a true WorkerManager func
+* Get a debug or release build
+* Be able to get back the running container in case of hot Reload instead of assuming they failed
+* Serious UI enhancement
+* Rework the retry logic
+* Stats ?
+* Enhance gerrit manager
+* be able to modify refs for dependencies
