@@ -49,18 +49,29 @@
             <th>State</th>
 
             {{range .builds}}
+            {{if eq .State.String "Success"}}
+            <tr class="success">
+            {{else if eq .State.String "FallbackSuccess"}}
+            <tr class="warning">
+            {{else if eq .State.String "Fail"}}
+            <tr class="danger">
+            {{else}}
             <tr class="">
-                <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date}}</a></td>
+            {{end}}
+                <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date.Format "3 January 2006 3:04PM"}}</a></td>
                 <td>{{.Duration}}</td>
                 <td>{{.UpdateWorkerDuration}}</td>
                 <td>{{.Commit}}</td>
                 <td>{{.State}}</td>
+
+                <td>
                 {{if .IsDownloadable}}
-                <td><input class="btn btn-primary" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/download';" value="Download" /></td>
+                <input class="btn btn-primary" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/download';" value="Download" />
                 {{end}}
                 {{if .IsRetryable}}
-                <td><input class="btn btn-warning" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/retry';" value="Retry" /></td>
+                <input class="btn btn-warning" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/retry';" value="Retry" />
                 {{end}}
+                </td>
             </tr>
             {{end}}
         </table>
