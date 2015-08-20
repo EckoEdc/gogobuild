@@ -18,7 +18,10 @@
         </div>
     </div>
     <div class="row">
-        <div class="panel panel-default">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                 <h3 class="panel-title">Launch a build</h3>
+            </div>
             <div class="panel-body">
                 {{with .project}}
                 <form class="form-inline" action="/projects/{{.Name}}/build/" method="post">
@@ -63,7 +66,6 @@
                 <td>{{.UpdateWorkerDuration}}</td>
                 <td>{{.Commit}}</td>
                 <td>{{.State}}</td>
-
                 <td>
                 {{if .IsDownloadable}}
                 <input class="btn btn-primary" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/download';" value="Download" />
