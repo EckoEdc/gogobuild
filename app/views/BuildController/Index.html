@@ -61,7 +61,7 @@
             {{else}}
             <tr class="">
             {{end}}
-                <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date.Format "2 Jan 15:04:05 2006 MST"}}</a></td>
+                <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date.Format "2 Jan 2006 15:04"}}</a></td>
                 <td>{{.Duration}}</td>
                 <td>{{.UpdateWorkerDuration}}</td>
                 <td>{{.Commit}}</td>
