@@ -77,9 +77,9 @@ func (b *Build) Duration() time.Duration {
 		return 0
 	}
 	if b.State == Building || b.State == Init {
-		return time.Now().Sub(b.Date)
+		return time.Now().Round(time.Second).Sub(b.Date.Round(time.Second))
 	}
-	return b.LastUpdated.Sub(b.Date)
+	return b.LastUpdated.Round(time.Second).Sub(b.Date.Round(time.Second))
 }
 
 //BuildManager is the build manager

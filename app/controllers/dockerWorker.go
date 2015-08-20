@@ -151,7 +151,7 @@ func (d *DockerWorker) startBuild() error {
 
 func (d *DockerWorker) tryUpdate() error {
 	//Start time
-	start := time.Now()
+	start := time.Now().Round(time.Second)
 
 	var cmds []string
 	cmds = append(cmds, "bash")
@@ -204,7 +204,7 @@ func (d *DockerWorker) tryUpdate() error {
 	}
 
 	//Set the update duration even if it failed
-	d.build.UpdateWorkerDuration = time.Now().Sub(start)
+	d.build.UpdateWorkerDuration = time.Now().Round(time.Second).Sub(start)
 	BMInstance().UpdateBuild(&d.build)
 
 	if retValue != 0 || err != nil {
