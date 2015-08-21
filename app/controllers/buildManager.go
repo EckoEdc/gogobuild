@@ -76,6 +76,14 @@ func (b *Build) IsRetryable() bool {
 	return false
 }
 
+//IsDeployable return if the build can be deployed
+func (b *Build) IsDeployable() bool {
+	if b.State > Fail && b.Commit != "updateWorker" && b.Commit == "master" {
+		return true
+	}
+	return false
+}
+
 //Duration return diff between date and updatedDate
 func (b *Build) Duration() time.Duration {
 	if b.LastUpdated.IsZero() {
@@ -200,7 +208,7 @@ func (b *BuildManager) Deploy(build *Build) {
 	//rm the old symbolic link and re-create it on the new build
 	linkName := fmt.Sprintf("%s/%s", localRepoFolder, build.ProjectToBuild.Configuration.Package[build.TargetSys])
 	exec.Command("rm", "-f", linkName)
-	exec.Command("ln", "-s", packageDateName, linkName)
+	exec.Command("cp", "-s", linkName, packageDateName)
 
 	distantUser, _ := revel.Config.String("distant_user")
 	distantIP, _ := revel.Config.String("distant_ip")

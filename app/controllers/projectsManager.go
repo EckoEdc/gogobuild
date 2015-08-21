@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/revel/modules/jobs/app/jobs"
 	"github.com/revel/revel"
 )
 
@@ -19,7 +20,7 @@ type ProjectConfiguration struct {
 	ReviewAddress      string
 	Package            map[string]string
 	ReloadProjectCmd   []string
-	DeployInstructions []string
+	AutoDeploySchedule map[string]string
 }
 
 //ReviewManager interface
@@ -37,12 +38,24 @@ type Project struct {
 
 //Init configuration
 func (p *Project) Init(dir os.FileInfo) error {
-	return p.loadConf(dir.Name())
+	err := p.loadConf(dir.Name())
+	if err == nil {
+		for sys, time := range p.Configuration.AutoDeploySchedule {
+			buildInstr := p.Configuration.BuildInstructions[sys]
+			if buildInstr != nil {
+				buildScheduleFunc := func() {
+					BMInstance().CreateOrReturnStatusBuild(p.Name, sys, "master")
+				}
+				jobs.Schedule(time, jobs.Func(buildScheduleFunc))
+			}
+		}
+
+	}
+	return err
 }
 
 //Reload configuration
 func (p *Project) Reload() error {
-	//TODO: we should git pull and reset before that to ensure configuration is up to date
 	for _, instr := range p.Configuration.ReloadProjectCmd {
 		cmd := exec.Command(instr)
 		cmd.Dir = revel.BasePath + "/public/projects/" + p.Name

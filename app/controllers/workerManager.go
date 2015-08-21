@@ -1,15 +1,18 @@
 package controllers
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/revel/modules/jobs/app/jobs"
+)
 
 //Worker interface
 type Worker interface {
-	Start() error
+	Run()
 }
 
 //WorkerManager singleton
 type WorkerManager struct {
-	workerQueue []Worker
 }
 
 //instance of WorkerManager
@@ -24,7 +27,7 @@ func WMInstance() *WorkerManager {
 }
 
 //Build Launch a build
-//TODO: Implement a queue of builder to really manage something...
+//Build queue is restricted by jobs.pool = 4 in app.conf (FIFO)
 func (w *WorkerManager) Build(build *Build) error {
 
 	var launchFunc func(build *Build, targetSys string) Worker
@@ -36,7 +39,7 @@ func (w *WorkerManager) Build(build *Build) error {
 		build.State = Fail
 		return errors.New("Not a valid build type")
 	}
-	launchFunc(build, build.TargetSys)
+	jobs.Now(launchFunc(build, build.TargetSys))
 	return nil
 }
 
@@ -45,6 +48,5 @@ func (w *WorkerManager) launchDockerBuild(build *Build, targetSys string) Worker
 		build:     *build,
 		targetSys: targetSys,
 	}
-	d.Start()
-	return &d
+	return d
 }

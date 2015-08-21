@@ -85,7 +85,7 @@ func (c BuildController) Deploy() revel.Result {
 		c.Flash.Error(err.Error())
 	}
 	if build.State > Fail {
-		BMInstance().Deploy(build)
+		go BMInstance().Deploy(build)
 	}
 	return c.Redirect("/projects/%s/builds/%s", build.ProjectToBuild.Name, build.ID.Hex())
 }

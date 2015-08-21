@@ -34,8 +34,8 @@ func (d *DockerWorker) init() error {
 	return err
 }
 
-//Start the DockerWorker
-func (d *DockerWorker) Start() error {
+//Run the DockerWorker
+func (d DockerWorker) Run() {
 	var err error
 
 	//Create log file
@@ -46,27 +46,27 @@ func (d *DockerWorker) Start() error {
 	err = d.init()
 	if err != nil {
 		d.logFile.WriteString(err.Error())
-		return err
+		return
 	}
 	d.imageName = fmt.Sprintf("gogobuild/%s_%s:", d.build.ProjectToBuild.Name, strings.ToLower(d.targetSys)) + "%s"
 
 	//Check if the fallback image exists else it's the first time we need to build it
 	_, err = d.docker.InspectImage(fmt.Sprintf(d.imageName, "fallback"))
 	if err == docker.ErrNoSuchImage {
-		go d.buildImage()
-		return nil
+		d.logFile.WriteString("No image found, try to build it.")
+		d.buildImage()
+		return
 	}
 	if err != nil {
 		d.logFile.WriteString(err.Error())
-		return err
+		return
 	}
 
-	go d.startBuild()
-	return nil
+	d.startBuild()
+	return
 }
 
 //buildImage build an image from
-// TODO: Fix this (e.g should not be a cmd call but use the api used everywhere else)
 func (d *DockerWorker) buildImage() error {
 
 	t := time.Now()

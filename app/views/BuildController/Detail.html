@@ -36,7 +36,7 @@
                 {{if .build.IsRetryable}}
                 <input class="btn btn-warning" type="button" onclick="location.href='/projects/{{.build.ProjectToBuild.Name}}/builds/{{.build.ID.Hex}}/retry';" value="Retry" />
                 {{end}}
-                {{if .build.IsDownloadable}}
+                {{if .build.IsDeployable}}
                 <input class="btn btn-info" type="button" onclick="location.href='/projects/{{.build.ProjectToBuild.Name}}/builds/{{.build.ID.Hex}}/deploy';" value="Deploy" />
                 {{end}}
             </div>

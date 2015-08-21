@@ -8,6 +8,8 @@ GoGo Build is a build/packaging system designed to be light and resilient.
  * go get github.com/fsouza/go-dockerclient
  * go get gopkg.in/mgo.v2
  * go get golang.org/x/build/gerrit
+ * go get github.com/revel/revel
+ * go get github.com/revel/modules/jobs
 
 Project
  * go get github.com/EckoEdc/gogobuild
