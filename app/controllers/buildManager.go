@@ -1,8 +1,12 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
+	"os/exec"
 	"time"
+
+	"github.com/revel/revel"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -50,6 +54,7 @@ type Build struct {
 	State                State
 	Commit               string
 	UpdateWorkerDuration time.Duration
+	Deploy               bool
 }
 
 //IsDownloadable return true if downloadable
@@ -176,7 +181,33 @@ func (b *BuildManager) UpdateBuild(build *Build) error {
 	if err != nil {
 		log.Println(err)
 	}
+	if build.State > Fail && build.Deploy == true {
+		b.Deploy(build)
+	}
 	return err
+}
+
+//Deploy the built package
+func (b *BuildManager) Deploy(build *Build) {
+	output := fmt.Sprintf("%s/public/output/%s/%d/%s/%s", revel.BasePath, build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
+
+	localRepoFolder, _ := revel.Config.String("local_repo_folder")
+	packageDateName := fmt.Sprintf("%s/%s-%s", localRepoFolder, build.Date.Format("200601021504"), build.ProjectToBuild.Configuration.Package[build.TargetSys])
+
+	//cp the package with date stamp
+	exec.Command("cp", output, packageDateName)
+
+	//rm the old symbolic link and re-create it on the new build
+	linkName := fmt.Sprintf("%s/%s", localRepoFolder, build.ProjectToBuild.Configuration.Package[build.TargetSys])
+	exec.Command("rm", "-f", linkName)
+	exec.Command("ln", "-s", packageDateName, linkName)
+
+	distantUser, _ := revel.Config.String("distant_user")
+	distantIP, _ := revel.Config.String("distant_ip")
+	distantFolder, _ := revel.Config.String("distant_folder")
+
+	//rsync the local repository to the distrubution server
+	exec.Command("rsync", "-arv", localRepoFolder, fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder))
 }
 
 //SaveBuild in DB

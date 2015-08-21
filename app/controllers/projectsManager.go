@@ -19,6 +19,7 @@ type ProjectConfiguration struct {
 	ReviewAddress      string
 	Package            map[string]string
 	ReloadProjectCmd   []string
+	DeployInstructions []string
 }
 
 //ReviewManager interface

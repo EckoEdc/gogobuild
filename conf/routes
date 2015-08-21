@@ -6,12 +6,12 @@ module:testrunner
 
 GET     /                                       App.Index
 GET     /projects                               ProjectsController.Index
-GET     /projects/:project/build/:sys           ProjectsController.Build
 GET     /projects/:project/build/:sys/:commit   ProjectsController.Build
 POST    /projects/:project/build/               ProjectsController.Build
 GET     /projects/:project/builds               BuildController.Index
 GET     /projects/:project/builds/:id           BuildController.Detail
 GET     /projects/:project/builds/:id/retry     BuildController.Retry
+GET     /projects/:project/builds/:id/deploy    BuildController.Deploy
 GET     /projects/:project/builds/:id/download  BuildController.Download
 
 # Ignore favicon requests

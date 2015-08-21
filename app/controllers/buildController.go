@@ -64,9 +64,28 @@ func (c BuildController) Download() revel.Result {
 		revel.ERROR.Println(err)
 		c.Flash.Error(err.Error())
 	}
-	outputAddr := fmt.Sprintf("/public/output/%s/%d/%s/%s", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
-	if c.Params.Get("format") == "json" {
-		return c.RenderJson(outputAddr)
+	if build.State > Fail {
+		outputAddr := fmt.Sprintf("/public/output/%s/%d/%s/%s", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
+		if c.Params.Get("format") == "json" {
+			return c.RenderJson(outputAddr)
+		}
+		return c.Redirect(outputAddr)
 	}
-	return c.Redirect(outputAddr)
+	if c.Params.Get("format") == "json" {
+		return c.RenderJson("")
+	}
+	return c.Redirect("/projects/%s/builds", build.ProjectToBuild.Name, build.ID.Hex())
+}
+
+//Deploy the built package
+func (c BuildController) Deploy() revel.Result {
+	build, err := BMInstance().GetBuildByID(c.Params.Get("id"))
+	if err != nil {
+		revel.ERROR.Println(err)
+		c.Flash.Error(err.Error())
+	}
+	if build.State > Fail {
+		BMInstance().Deploy(build)
+	}
+	return c.Redirect("/projects/%s/builds/%s", build.ProjectToBuild.Name, build.ID.Hex())
 }

@@ -114,14 +114,18 @@ func (d *DockerWorker) startBuild() error {
 	d.build.State = Init
 	BMInstance().UpdateBuild(&d.build)
 
-	//try to make an up to date image
-	useFallbackImage := false
-	err := d.tryUpdate()
-	if err != nil {
-		useFallbackImage = true
-		d.logFile.WriteString("\n\n---Update Image failed falling back---\n")
-	} else {
-		d.logFile.WriteString("\n\n---Using updated image---\n")
+	var err error
+	//Use fallback image for refs/build
+	useFallbackImage := d.build.Commit != "master"
+	if useFallbackImage == false {
+		//try to make an up to date image
+		err = d.tryUpdate()
+		if err != nil {
+			useFallbackImage = true
+			d.logFile.WriteString("\n\n---Update Image failed falling back---\n")
+		} else {
+			d.logFile.WriteString("\n\n---Using updated image---\n")
+		}
 	}
 
 	//Don't build the project if that's an update build
