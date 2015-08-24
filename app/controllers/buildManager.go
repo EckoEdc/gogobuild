@@ -203,19 +203,19 @@ func (b *BuildManager) Deploy(build *Build) {
 	packageDateName := fmt.Sprintf("%s/%s-%s", localRepoFolder, build.Date.Format("200601021504"), build.ProjectToBuild.Configuration.Package[build.TargetSys])
 
 	//cp the package with date stamp
-	exec.Command("cp", output, packageDateName)
+	exec.Command("cp", output, packageDateName).Run()
 
 	//rm the old symbolic link and re-create it on the new build
 	linkName := fmt.Sprintf("%s/%s", localRepoFolder, build.ProjectToBuild.Configuration.Package[build.TargetSys])
-	exec.Command("rm", "-f", linkName)
-	exec.Command("cp", "-s", linkName, packageDateName)
+	exec.Command("rm", "-f", linkName).Run()
+	exec.Command("cp", "-s", linkName, packageDateName).Run()
 
 	distantUser, _ := revel.Config.String("distant_user")
 	distantIP, _ := revel.Config.String("distant_ip")
 	distantFolder, _ := revel.Config.String("distant_folder")
 
 	//rsync the local repository to the distrubution server
-	exec.Command("rsync", "-arv", localRepoFolder, fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder))
+	exec.Command("rsync", "-arv", localRepoFolder, fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder)).Run()
 }
 
 //SaveBuild in DB
