@@ -34,8 +34,10 @@
                     </select>
                     <select class="form-control" name="commit">
                         <option value="master">master</option>
+                        {{if .ReviewManagerInstance}}
                         {{range .ReviewManagerInstance.GetOpenChanges}}
                         <option value="{{.}}">{{.}}</option>
+                        {{end}}
                         {{end}}
                         <option value="updateWorker">Update Builder</option>
                     </select>

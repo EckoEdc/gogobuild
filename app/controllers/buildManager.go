@@ -199,7 +199,7 @@ func (b *BuildManager) UpdateBuild(build *Build) error {
 func (b *BuildManager) Deploy(build *Build) {
 	output := fmt.Sprintf("%s/public/output/%s/%d/%s/%s", revel.BasePath, build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
 
-	localRepoFolder, _ := revel.Config.String("local_repo_folder")
+	localRepoFolder, _ := revel.Config.String("local_repo_folder") //TODO: SHOULD BE PROJECT PROPERTY
 	packageDateName := fmt.Sprintf("%s/%s-%s", localRepoFolder, build.Date.Format("200601021504"), build.ProjectToBuild.Configuration.Package[build.TargetSys])
 
 	//cp the package with date stamp
@@ -212,9 +212,9 @@ func (b *BuildManager) Deploy(build *Build) {
 
 	distantUser, _ := revel.Config.String("distant_user")
 	distantIP, _ := revel.Config.String("distant_ip")
-	distantFolder, _ := revel.Config.String("distant_folder")
+	distantFolder, _ := revel.Config.String("distant_folder") //TODO: SHOULD BE PROJECT PROPERTY
 
-	//rsync the local repository to the distrubution server
+	//rsync the local repository to the distribution server
 	exec.Command("rsync", "-arv", localRepoFolder+"/", fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder)).Run()
 }
 

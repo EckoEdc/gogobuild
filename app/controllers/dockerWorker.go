@@ -94,11 +94,14 @@ func (d *DockerWorker) buildImage() error {
 		OutputStream:   outputbuf,
 	}
 	if err := d.docker.BuildImage(opts); err != nil {
-		log.Println(err)
+		d.logFile.WriteString(err.Error())
+		d.build.State = Fail
+		BMInstance().UpdateBuild(build)
+	} else {
+		d.logFile.Write(outputbuf.Bytes())
+		d.startBuild()
 	}
-	d.logFile.Write(outputbuf.Bytes())
 
-	d.startBuild()
 	return nil
 }
 
