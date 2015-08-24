@@ -22,7 +22,7 @@ func (pc ProjectsController) Index() revel.Result {
 
 //Build a project
 func (pc ProjectsController) Build() revel.Result {
-	build, _ := BMInstance().CreateOrReturnStatusBuild(pc.Params.Get("project"), pc.Params.Get("sys"), pc.Params.Get("commit"))
+	build, _ := BMInstance().CreateOrReturnStatusBuild(pc.Params.Get("project"), pc.Params.Get("sys"), pc.Params.Get("commit"), false)
 	if build.State == Created {
 		pc.Flash.Success("Build Started %s %s", pc.Params.Get("project"), pc.Params.Get("sys"))
 	} else if build.State == Fail {

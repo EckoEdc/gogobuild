@@ -118,7 +118,7 @@ func BMInstance() *BuildManager {
 }
 
 //CreateOrReturnStatusBuild create or return status of requested build
-func (b *BuildManager) CreateOrReturnStatusBuild(projectName string, sys string, commit string) (*Build, error) {
+func (b *BuildManager) CreateOrReturnStatusBuild(projectName string, sys string, commit string, deploy bool) (*Build, error) {
 	//FIXME: This logic is flawed
 	// if commit == "master" || commit == "updateWorker" {
 	// 	return b.newBuild(projectName, sys, commit), nil
@@ -131,22 +131,22 @@ func (b *BuildManager) CreateOrReturnStatusBuild(projectName string, sys string,
 	// } else if build.State == Fail {
 	// 	b.RetryBuild(build)
 	// }
-	return b.newBuild(projectName, sys, commit), nil
+	return b.newBuild(projectName, sys, commit, deploy), nil
 }
 
 //NewBuild create a build and gives it to WorkerManager
-func (b *BuildManager) newBuild(projectName string, sys string, commit string) *Build {
+func (b *BuildManager) newBuild(projectName string, sys string, commit string, deploy bool) *Build {
 	project := PMInstance().GetProjectByName(projectName)
 	project.Reload()
 	var build Build
 	if sys == "all" {
 		for sysToBuild := range project.Configuration.BuildInstructions {
-			build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sysToBuild, State: Created, Commit: commit}
+			build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sysToBuild, State: Created, Commit: commit, Deploy: deploy}
 			WMInstance().Build(&build)
 			b.saveBuild(&build)
 		}
 	} else {
-		build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit}
+		build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit, Deploy: deploy}
 		WMInstance().Build(&build)
 		b.saveBuild(&build)
 	}

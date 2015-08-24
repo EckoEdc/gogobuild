@@ -44,7 +44,7 @@ func (p *Project) Init(dir os.FileInfo) error {
 			buildInstr := p.Configuration.BuildInstructions[sys]
 			if buildInstr != nil {
 				buildScheduleFunc := func() {
-					BMInstance().CreateOrReturnStatusBuild(p.Name, sys, "master")
+					BMInstance().CreateOrReturnStatusBuild(p.Name, sys, "master", true)
 				}
 				jobs.Schedule(time, jobs.Func(buildScheduleFunc))
 			}
