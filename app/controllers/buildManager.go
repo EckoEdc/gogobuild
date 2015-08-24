@@ -208,6 +208,8 @@ func (b *BuildManager) Deploy(build *Build) {
 	//rm the old symbolic link and re-create it on the new build
 	linkName := fmt.Sprintf("%s/%s", localRepoFolder, build.ProjectToBuild.Configuration.Package[build.TargetSys])
 	exec.Command("rm", "-f", linkName).Run()
+	log.Println(linkName)
+	log.Println(packageDateName)
 	exec.Command("ln", "-s", linkName, packageDateName).Run()
 
 	distantUser, _ := revel.Config.String("distant_user")
@@ -215,7 +217,7 @@ func (b *BuildManager) Deploy(build *Build) {
 	distantFolder, _ := revel.Config.String("distant_folder")
 
 	//rsync the local repository to the distrubution server
-	exec.Command("rsync", "-arv", localRepoFolder, fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder)).Run()
+	exec.Command("rsync", "-arv", localRepoFolder+"/", fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder)).Run()
 }
 
 //SaveBuild in DB
