@@ -200,19 +200,20 @@ func (b *BuildManager) Deploy(build *Build) {
 	output := fmt.Sprintf("%s/public/output/%s/%d/%s/%s", revel.BasePath, build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
 
 	localRepoFolder, _ := revel.Config.String("local_repo_folder") //TODO: SHOULD BE PROJECT PROPERTY
-	packageDateName := fmt.Sprintf("%s/%s-%s", localRepoFolder, build.Date.Format("200601021504"), build.ProjectToBuild.Configuration.Package[build.TargetSys])
+	packageDateName := fmt.Sprintf("%s-%s", build.Date.Format("200601021504"), build.ProjectToBuild.Configuration.Package[build.TargetSys])
+	packageDateNameDir := fmt.Sprintf("%s/%s", localRepoFolder, packageDateName)
 
 	//cp the package with date stamp
-	exec.Command("cp", output, packageDateName).Run()
+	exec.Command("cp", output, packageDateNameDir).Run()
 
 	//rm the old symbolic link and re-create it on the new build
 	linkName := fmt.Sprintf("%s/%s", localRepoFolder, build.ProjectToBuild.Configuration.Package[build.TargetSys])
 	exec.Command("rm", "-f", linkName).Run()
-	exec.Command("ln", "-s", linkName, packageDateName).Run()
+	exec.Command("ln", "-s", packageDateName, linkName).Run()
 
 	distantUser, _ := revel.Config.String("distant_user")
 	distantIP, _ := revel.Config.String("distant_ip")
-	distantFolder, _ := revel.Config.String("distant_folder") //TODO: SHOULD BE PROJECT PROPERTY
+	distantFolder, _ := revel.Config.String("distant_folder") //TODO: SHOULD BE PROJECT PROPERTY OR APPENDED WITH SYS
 
 	//rsync the local repository to the distribution server
 	exec.Command("rsync", "-arv", localRepoFolder+"/", fmt.Sprintf("%s@%s:%s", distantUser, distantIP, distantFolder)).Run()

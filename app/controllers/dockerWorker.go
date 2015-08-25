@@ -96,7 +96,7 @@ func (d *DockerWorker) buildImage() error {
 	if err := d.docker.BuildImage(opts); err != nil {
 		d.logFile.WriteString(err.Error())
 		d.build.State = Fail
-		BMInstance().UpdateBuild(build)
+		BMInstance().UpdateBuild(&d.build)
 	} else {
 		d.logFile.Write(outputbuf.Bytes())
 		d.startBuild()

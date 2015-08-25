@@ -3,7 +3,10 @@ package controllers
 import "github.com/revel/revel"
 
 func init() {
-	revel.OnAppStart(func() { BMInstance().BuildMaintenance() })
+	revel.OnAppStart(func() {
+		BMInstance().BuildMaintenance()
+		PMInstance()
+	})
 }
 
 //App struct
