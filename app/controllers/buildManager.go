@@ -91,7 +91,7 @@ func (b *Build) Duration() time.Duration {
 		return 0
 	}
 	if b.State == Building || b.State == Init {
-		return b.StartDate.Round(time.Second).Sub(b.Date.Round(time.Second))
+		return time.Now().Round(time.Second).Sub(b.StartDate.Round(time.Second))
 	}
 	return b.LastUpdated.Round(time.Second).Sub(b.StartDate.Round(time.Second))
 }
