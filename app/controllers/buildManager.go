@@ -48,6 +48,7 @@ func (s State) String() string {
 type Build struct {
 	ID                   bson.ObjectId `bson:"_id,omitempty"`
 	Date                 time.Time
+	StartDate            time.Time
 	LastUpdated          time.Time
 	ProjectToBuild       Project
 	TargetSys            string
@@ -86,13 +87,13 @@ func (b *Build) IsDeployable() bool {
 
 //Duration return diff between date and updatedDate
 func (b *Build) Duration() time.Duration {
-	if b.LastUpdated.IsZero() {
+	if b.LastUpdated.IsZero() || b.StartDate.IsZero() {
 		return 0
 	}
 	if b.State == Building || b.State == Init {
-		return time.Now().Round(time.Second).Sub(b.Date.Round(time.Second))
+		return b.StartDate.Round(time.Second).Sub(b.Date.Round(time.Second))
 	}
-	return b.LastUpdated.Round(time.Second).Sub(b.Date.Round(time.Second))
+	return b.LastUpdated.Round(time.Second).Sub(b.StartDate.Round(time.Second))
 }
 
 //BuildManager is the build manager
@@ -184,8 +185,8 @@ func (b *BuildManager) GetBuildByID(id string) (*Build, error) {
 //UpdateBuild in DB
 func (b *BuildManager) UpdateBuild(build *Build) error {
 	c := b.session.DB("gogobuild").C("builds")
-	err := c.Update(bson.M{"projecttobuild.name": build.ProjectToBuild.Name, "date": build.Date},
-		bson.M{"$set": bson.M{"state": build.State, "lastupdated": time.Now(), "updateworkerduration": build.UpdateWorkerDuration}})
+	err := c.Update(bson.M{"projecttobuild.name": build.ProjectToBuild.Name, "date": build.Date, "targetsys": build.TargetSys},
+		bson.M{"$set": bson.M{"state": build.State, "lastupdated": time.Now(), "updateworkerduration": build.UpdateWorkerDuration, "startdate": build.StartDate}})
 	if err != nil {
 		log.Println(err)
 	}

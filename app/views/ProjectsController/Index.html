@@ -17,25 +17,12 @@
             {{template "flash.html" .}}
         </div>
     </div>
-    <div class="row">
+    <div class="row col-md-9">
+        <div class="list-group">
         {{range .projectsList}}
-        <form class="form-inline" action="/projects/{{.Name}}/build/" method="post">
-            <a href="/projects/{{.Name}}/builds">{{.Name}}</a>
-            <select class="form-control" name="sys">
-                {{range $key, $value := .Configuration.BuildInstructions}}
-                <option value="{{$key}}">{{$key}}</option>
-                {{end}}
-                <option value="all">all</option>
-            </select>
-            <select class="form-control" name="commit">
-                <option value="master">master</option>
-                {{range .ReviewManagerInstance.GetOpenChanges}}
-                <option value="{{.}}">{{.}}</option>
-                {{end}}
-            </select>
-            <input class="btn btn-success" type="submit" value="Build" />
-        </form>
+            <a href="/projects/{{.Name}}/builds" class="list-group-item" style="text-align:center">{{.Name}}</a>
         {{end}}
+        </div>
     </div>
 </div>
 

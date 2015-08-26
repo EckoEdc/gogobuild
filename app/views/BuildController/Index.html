@@ -48,6 +48,7 @@
         </div>
         <table class="table">
             <th>Date</th>
+            <th>Sys</th>
             <th>Build Duration</th>
             <th>Update Duration</th>
             <th>Refs</th>
@@ -65,6 +66,7 @@
             <tr class="">
             {{end}}
                 <td><a href="/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}">{{.Date.Format "2 Jan 2006 15:04"}}</a></td>
+                <td>{{.TargetSys}}</td>
                 <td>{{.Duration}}</td>
                 <td>{{.UpdateWorkerDuration}}</td>
                 <td>{{.Commit}}</td>

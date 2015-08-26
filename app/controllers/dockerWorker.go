@@ -38,6 +38,8 @@ func (d *DockerWorker) init() error {
 func (d DockerWorker) Run() {
 	var err error
 
+	d.build.StartDate = time.Now()
+	BMInstance().UpdateBuild(&d.build)
 	//Create log file
 	d.outputDir = fmt.Sprintf("%s/public/output/%s/%d/%s", revel.BasePath, d.build.ProjectToBuild.Name, d.build.Date.Unix(), d.build.TargetSys)
 	os.MkdirAll(d.outputDir, 0777)
@@ -259,7 +261,8 @@ func (d *DockerWorker) buildProject(fallBack bool) error {
 		Cmd:          cmds,
 		Image:        fmt.Sprintf(d.imageName, suffix),
 	}
-	hostConfig := &docker.HostConfig{Binds: []string{d.outputDir + ":/output"}}
+	sourceDir := fmt.Sprintf("%s/%s/%s:/%s", revel.BasePath, "public/projects/", d.build.ProjectToBuild.Name, d.build.ProjectToBuild.Name)
+	hostConfig := &docker.HostConfig{Binds: []string{d.outputDir + ":/output", sourceDir}}
 	containerConfig := docker.CreateContainerOptions{
 		Config:     config,
 		HostConfig: hostConfig,
