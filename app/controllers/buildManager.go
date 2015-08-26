@@ -185,7 +185,7 @@ func (b *BuildManager) GetBuildByID(id string) (*Build, error) {
 //UpdateBuild in DB
 func (b *BuildManager) UpdateBuild(build *Build) error {
 	c := b.session.DB("gogobuild").C("builds")
-	err := c.Update(bson.M{"projecttobuild.name": build.ProjectToBuild.Name, "date": build.Date, "targetsys": build.TargetSys},
+	err := c.Update(bson.M{"_id": build.ID},
 		bson.M{"$set": bson.M{"state": build.State, "lastupdated": time.Now(), "updateworkerduration": build.UpdateWorkerDuration, "startdate": build.StartDate}})
 	if err != nil {
 		log.Println(err)
