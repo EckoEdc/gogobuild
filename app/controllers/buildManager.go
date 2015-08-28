@@ -235,7 +235,7 @@ func (b *BuildManager) Deploy(build *Build) {
 	}
 
 	//Exec Deploy Script
-	exec.Command("/bin/bash", fmt.Sprintf("%s/public/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript)).Run()
+	exec.Command("/bin/bash", fmt.Sprintf("%s/public/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript), build.ProjectToBuild.Name).Run()
 }
 
 //SaveBuild in DB
