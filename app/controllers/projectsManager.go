@@ -21,6 +21,7 @@ type ProjectConfiguration struct {
 	Package            map[string]string
 	ReloadProjectCmd   []string
 	AutoDeploySchedule map[string]string
+	DeployScript       string
 }
 
 //ReviewManager interface
@@ -43,10 +44,11 @@ func (p *Project) Init(dir os.FileInfo) error {
 		for sys, time := range p.Configuration.AutoDeploySchedule {
 			buildInstr := p.Configuration.BuildInstructions[sys]
 			if buildInstr != nil {
-				buildScheduleFunc := func() {
-					BMInstance().CreateOrReturnStatusBuild(p.Name, sys, "master", true)
-				}
-				jobs.Schedule(time, jobs.Func(buildScheduleFunc))
+				//Explicitly capture sys
+				targetSys := sys
+				jobs.Schedule(time, jobs.Func(func() {
+					BMInstance().CreateOrReturnStatusBuild(p.Name, targetSys, "master", true)
+				}))
 			}
 		}
 
