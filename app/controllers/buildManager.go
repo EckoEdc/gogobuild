@@ -231,7 +231,6 @@ func (b *BuildManager) Deploy(build *Build) {
 	date := build.Date.Format("200601021504")
 	for _, f := range files {
 		re := regexp.MustCompile("(_amd64|_i386|.x86_64|.i686)?(.deb|.rpm|.exe)")
-		fmt.Println(re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2"))
 		exec.Command("cp", output+f.Name(), tmpFolder+build.TargetSys+"/"+re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2")).Run()
 	}
 
