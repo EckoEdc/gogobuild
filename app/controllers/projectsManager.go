@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/revel/modules/jobs/app/jobs"
 	"github.com/revel/revel"
@@ -64,6 +66,15 @@ func (p *Project) Reload() error {
 		cmd.Run()
 	}
 	return p.loadConf(p.Name)
+}
+
+//GetHeadCommitID return the head commit id
+func (p *Project) GetHeadCommitID() string {
+	gitDir := fmt.Sprintf("--git-dir=%s/public/projects/%s/.git", revel.BasePath, p.Name)
+	exec.Command("git", "fetch", "origin")
+	cmd := exec.Command("git", gitDir, "rev-parse", "--short=7", "origin/HEAD")
+	ref, _ := cmd.CombinedOutput()
+	return strings.Replace(string(ref), "\n", "", -1)
 }
 
 //loadConf load the json conf (e.g .packer.json)

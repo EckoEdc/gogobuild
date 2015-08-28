@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/revel/revel"
@@ -56,6 +58,7 @@ type Build struct {
 	Commit               string
 	UpdateWorkerDuration time.Duration
 	Deploy               bool
+	GitCommitID          string
 }
 
 //IsDownloadable return true if downloadable
@@ -142,12 +145,29 @@ func (b *BuildManager) newBuild(projectName string, sys string, commit string, d
 	var build Build
 	if sys == "all" {
 		for sysToBuild := range project.Configuration.BuildInstructions {
-			build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sysToBuild, State: Created, Commit: commit, Deploy: deploy}
+			build = Build{ID: bson.NewObjectId(),
+				Date:           time.Now(),
+				ProjectToBuild: project,
+				TargetSys:      sysToBuild,
+				State:          Created,
+				Commit:         commit,
+				Deploy:         deploy,
+				GitCommitID:    project.GetHeadCommitID(),
+			}
 			WMInstance().Build(&build)
 			b.saveBuild(&build)
 		}
 	} else {
-		build = Build{ID: bson.NewObjectId(), Date: time.Now(), ProjectToBuild: project, TargetSys: sys, State: Created, Commit: commit, Deploy: deploy}
+		build = Build{
+			ID:             bson.NewObjectId(),
+			Date:           time.Now(),
+			ProjectToBuild: project,
+			TargetSys:      sys,
+			State:          Created,
+			Commit:         commit,
+			Deploy:         deploy,
+			GitCommitID:    project.GetHeadCommitID(),
+		}
 		WMInstance().Build(&build)
 		b.saveBuild(&build)
 	}
@@ -203,10 +223,17 @@ func (b *BuildManager) Deploy(build *Build) {
 	localTmpFolder, _ := revel.Config.String("local_tmp_folder")
 	tmpFolder := fmt.Sprintf("%s%s/packages/", localTmpFolder, build.ProjectToBuild.Name)
 
-	exec.Command("mkdir", "-p", tmpFolder).Run()
+	exec.Command("rm", "-Rf", tmpFolder+build.TargetSys).Run()
+	exec.Command("mkdir", "-p", tmpFolder+build.TargetSys).Run()
 
 	//Copy output to tmp_folder
-	exec.Command("cp", "-R", output, tmpFolder).Run()
+	files, _ := ioutil.ReadDir(output)
+	date := build.Date.Format("200601021504")
+	for _, f := range files {
+		re := regexp.MustCompile("(_amd64|_i386|.x86_64|.i686)?(.deb|.rpm|.exe)")
+		fmt.Println(re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2"))
+		exec.Command("cp", output+f.Name(), tmpFolder+build.TargetSys+"/"+re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2")).Run()
+	}
 
 	//Exec Deploy Script
 	exec.Command("/bin/bash", fmt.Sprintf("%s/public/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript)).Run()
