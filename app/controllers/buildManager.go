@@ -212,6 +212,8 @@ func (b *BuildManager) UpdateBuild(build *Build) error {
 	}
 	if build.State > Fail && build.Deploy == true {
 		b.Deploy(build)
+	} else if build.State == Fail && build.Deploy == true {
+		//SEND MAIL
 	}
 	return err
 }
@@ -229,13 +231,18 @@ func (b *BuildManager) Deploy(build *Build) {
 	//Copy output to tmp_folder
 	files, _ := ioutil.ReadDir(output)
 	date := build.Date.Format("200601021504")
-	re := regexp.MustCompile("(_amd64|_i386|.x86_64|.i686)?(.deb|.rpm|.exe)")
+	re := regexp.MustCompile("(_amd64|_i386|\\.x86_64|\\.i686)?(\\.deb|\\.rpm|\\.exe)$")
 	for _, f := range files {
 		exec.Command("cp", output+f.Name(), tmpFolder+"/"+re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2")).Run()
 	}
 
 	//Exec Deploy Script
-	exec.Command("/bin/bash", fmt.Sprintf("%s/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript), build.ProjectToBuild.Name).Run()
+	cmd := exec.Command("/bin/bash", fmt.Sprintf("%s/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript), build.ProjectToBuild.Name)
+	out, err := cmd.CombinedOutput()
+	revel.WARN.Println(string(out))
+	if err != nil {
+		revel.ERROR.Println(err.Error())
+	}
 }
 
 //SaveBuild in DB
