@@ -113,7 +113,7 @@ func (b *Build) CreateOutputTar() error {
 	tw := tar.NewWriter(tarFile)
 	files, _ := ioutil.ReadDir(output)
 	for _, f := range files {
-		if f.Name() == "output.tar" {
+		if f.Name() == "output.tar" || f.IsDir() == true {
 			continue
 		}
 		fileFD, err := os.Open(output + "/" + f.Name())
@@ -135,9 +135,7 @@ func (b *Build) CreateOutputTar() error {
 			return err
 		}
 	}
-	if err := tw.Flush(); err != nil {
-		return err
-	}
+
 	if err := tw.Close(); err != nil {
 		return err
 	}
