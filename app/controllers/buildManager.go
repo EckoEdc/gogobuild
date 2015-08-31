@@ -135,7 +135,9 @@ func (b *Build) CreateOutputTar() error {
 			return err
 		}
 	}
-
+	if err := tw.Flush(); err != nil {
+		return err
+	}
 	if err := tw.Close(); err != nil {
 		return err
 	}
