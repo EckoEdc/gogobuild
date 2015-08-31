@@ -221,21 +221,21 @@ func (b *BuildManager) Deploy(build *Build) {
 	output := fmt.Sprintf("%s/public/output/%s/%d/%s/", revel.BasePath, build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys)
 
 	localTmpFolder, _ := revel.Config.String("local_tmp_folder")
-	tmpFolder := fmt.Sprintf("%s%s/packages/", localTmpFolder, build.ProjectToBuild.Name)
+	tmpFolder := fmt.Sprintf("%s%s/packages/%s", localTmpFolder, build.ProjectToBuild.Name, build.TargetSys)
 
-	exec.Command("rm", "-Rf", tmpFolder+build.TargetSys).Run()
-	exec.Command("mkdir", "-p", tmpFolder+build.TargetSys).Run()
+	exec.Command("rm", "-Rf", tmpFolder).Run()
+	exec.Command("mkdir", "-p", tmpFolder).Run()
 
 	//Copy output to tmp_folder
 	files, _ := ioutil.ReadDir(output)
 	date := build.Date.Format("200601021504")
+	re := regexp.MustCompile("(_amd64|_i386|.x86_64|.i686)?(.deb|.rpm|.exe)")
 	for _, f := range files {
-		re := regexp.MustCompile("(_amd64|_i386|.x86_64|.i686)?(.deb|.rpm|.exe)")
-		exec.Command("cp", output+f.Name(), tmpFolder+build.TargetSys+"/"+re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2")).Run()
+		exec.Command("cp", output+f.Name(), tmpFolder+"/"+re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2")).Run()
 	}
 
 	//Exec Deploy Script
-	exec.Command("/bin/bash", fmt.Sprintf("%s/public/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript), build.ProjectToBuild.Name).Run()
+	exec.Command("/bin/bash", fmt.Sprintf("%s/scripts/%s", revel.BasePath, build.ProjectToBuild.Configuration.DeployScript), build.ProjectToBuild.Name).Run()
 }
 
 //SaveBuild in DB
