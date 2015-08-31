@@ -70,7 +70,7 @@ func (c BuildController) Download() revel.Result {
 		if len(build.ProjectToBuild.Configuration.Package[build.TargetSys]) == 0 {
 			//Test for tar archive or create it
 			tarFile := fmt.Sprintf("/public/output/%s/%d/%s/output.tar", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys)
-			if _, err := os.Stat(tarFile); os.IsNotExist(err) {
+			if _, err := os.Stat(revel.BasePath + tarFile); os.IsNotExist(err) {
 				if err := build.CreateOutputTar(); err != nil {
 					revel.ERROR.Println(err)
 					c.Flash.Error(err.Error())
