@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"archive/tar"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -98,6 +100,46 @@ func (b *Build) Duration() time.Duration {
 		return time.Now().Round(time.Second).Sub(b.StartDate.Round(time.Second))
 	}
 	return b.LastUpdated.Round(time.Second).Sub(b.StartDate.Round(time.Second))
+}
+
+//CreateOutputTar the entire output folder
+func (b *Build) CreateOutputTar() error {
+
+	output := fmt.Sprintf("%s/public/output/%s/%d/%s/", revel.BasePath, b.ProjectToBuild.Name, b.Date.Unix(), b.TargetSys)
+	tarFile, err := os.Create(output + "/output.tar")
+	if err != nil {
+		return err
+	}
+	tw := tar.NewWriter(tarFile)
+	files, _ := ioutil.ReadDir(output)
+	for _, f := range files {
+		if f.Name() == "output.tar" {
+			continue
+		}
+		fileFD, err := os.Open(output + "/" + f.Name())
+		if err != nil {
+			return err
+		}
+		defer fileFD.Close()
+		stat, _ := fileFD.Stat()
+		hdr := &tar.Header{
+			Name: f.Name(),
+			Mode: 0600,
+			Size: stat.Size(),
+		}
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+		content, _ := ioutil.ReadAll(fileFD)
+		if _, err := tw.Write(content); err != nil {
+			return err
+		}
+	}
+
+	if err := tw.Close(); err != nil {
+		return err
+	}
+	return nil
 }
 
 //BuildManager is the build manager

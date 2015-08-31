@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/revel/revel"
 )
@@ -65,7 +66,21 @@ func (c BuildController) Download() revel.Result {
 		c.Flash.Error(err.Error())
 	}
 	if build.State > Fail {
-		outputAddr := fmt.Sprintf("/public/output/%s/%d/%s/%s", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
+		var outputAddr string
+		if len(build.ProjectToBuild.Configuration.Package[build.TargetSys]) == 0 {
+			//Test for tar archive or create it
+			tarFile := fmt.Sprintf("/public/output/%s/%d/%s/output.tar", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys)
+			if _, err := os.Stat(tarFile); os.IsNotExist(err) {
+				if err := build.CreateOutputTar(); err != nil {
+					revel.ERROR.Println(err)
+					c.Flash.Error(err.Error())
+					return c.Redirect("/projects/%s/builds/%s", build.ProjectToBuild.Name, build.ID.Hex())
+				}
+			}
+			outputAddr = tarFile
+		} else {
+			outputAddr = fmt.Sprintf("/public/output/%s/%d/%s/%s", build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys, build.ProjectToBuild.Configuration.Package[build.TargetSys])
+		}
 		if c.Params.Get("format") == "json" {
 			return c.RenderJson(outputAddr)
 		}
@@ -74,7 +89,7 @@ func (c BuildController) Download() revel.Result {
 	if c.Params.Get("format") == "json" {
 		return c.RenderJson("")
 	}
-	return c.Redirect("/projects/%s/builds", build.ProjectToBuild.Name, build.ID.Hex())
+	return c.Redirect("/projects/%s/builds/%s", build.ProjectToBuild.Name, build.ID.Hex())
 }
 
 //Deploy the built package
