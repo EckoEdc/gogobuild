@@ -23,6 +23,7 @@ func (c BuildController) Index() revel.Result {
 		return c.RenderJson(builds)
 	}
 	project := PMInstance().GetProjectByName(c.Params.Get("project"))
+	project.Reload()
 	return c.Render(builds, project)
 }
 
@@ -33,7 +34,6 @@ func (c BuildController) Detail() revel.Result {
 		c.Flash.Error(err.Error())
 		return c.Render()
 	}
-
 	if c.Params.Get("format") == "json" {
 		return c.RenderJson(build)
 	}
