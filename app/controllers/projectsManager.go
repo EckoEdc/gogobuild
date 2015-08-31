@@ -72,7 +72,7 @@ func (p *Project) Reload() error {
 func (p *Project) GetHeadCommitID() string {
 	gitDir := fmt.Sprintf("--git-dir=%s/public/projects/%s/.git", revel.BasePath, p.Name)
 	exec.Command("git", "fetch", "origin")
-	cmd := exec.Command("git", gitDir, "rev-parse", "--short=7", "origin/HEAD")
+	cmd := exec.Command("git", gitDir, "rev-parse", "--short=7", "origin/master")
 	ref, _ := cmd.CombinedOutput()
 	return strings.Replace(string(ref), "\n", "", -1)
 }

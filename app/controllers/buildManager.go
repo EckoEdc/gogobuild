@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/revel/revel"
@@ -223,7 +224,7 @@ func (b *BuildManager) Deploy(build *Build) {
 	output := fmt.Sprintf("%s/public/output/%s/%d/%s/", revel.BasePath, build.ProjectToBuild.Name, build.Date.Unix(), build.TargetSys)
 
 	localTmpFolder, _ := revel.Config.String("local_tmp_folder")
-	tmpFolder := fmt.Sprintf("%s%s/packages/%s", localTmpFolder, build.ProjectToBuild.Name, build.TargetSys)
+	tmpFolder := fmt.Sprintf("%s%s/packages/%s", localTmpFolder, strings.Replace(build.ProjectToBuild.Name, "_i386", "", -1), build.TargetSys)
 
 	exec.Command("rm", "-Rf", tmpFolder).Run()
 	exec.Command("mkdir", "-p", tmpFolder).Run()
