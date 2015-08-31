@@ -53,7 +53,6 @@ func (p *Project) Init(dir os.FileInfo) error {
 				}))
 			}
 		}
-
 	}
 	return err
 }
@@ -61,7 +60,11 @@ func (p *Project) Init(dir os.FileInfo) error {
 //Reload configuration
 func (p *Project) Reload() error {
 	for _, instr := range p.Configuration.ReloadProjectCmd {
-		cmd := exec.Command(instr)
+		instrSplit := strings.Split(instr, " ")
+		if len(instrSplit) == 0 {
+			continue
+		}
+		cmd := exec.Command(instrSplit[0], instrSplit[1:]...)
 		cmd.Dir = revel.BasePath + "/public/projects/" + p.Name
 		cmd.Run()
 	}
