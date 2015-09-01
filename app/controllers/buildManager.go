@@ -256,7 +256,7 @@ func (b *BuildManager) UpdateBuild(build *Build) error {
 	if build.State > Fail && build.Deploy == true {
 		b.Deploy(build)
 	} else if build.State == Fail && build.Deploy == true {
-		//SEND MAIL
+		MMInstance().SendBuildFailedMail(*build)
 	}
 	return err
 }

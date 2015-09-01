@@ -15,15 +15,16 @@ import (
 
 //ProjectConfiguration struct
 type ProjectConfiguration struct {
-	BuildType          string
-	BuildInstructions  map[string][]string
-	UpdateInstructions map[string][]string
-	ReviewType         string
-	ReviewAddress      string
-	Package            map[string]string
-	ReloadProjectCmd   []string
-	AutoDeploySchedule map[string]string
-	DeployScript       string
+	BuildType              string
+	BuildInstructions      map[string][]string
+	UpdateInstructions     map[string][]string
+	ReviewType             string
+	ReviewAddress          string
+	Package                map[string]string
+	ReloadProjectCmd       []string
+	AutoDeploySchedule     map[string]string
+	DeployScript           string
+	NotificationMailAdress []string
 }
 
 //ReviewManager interface
