@@ -8,4 +8,4 @@
 * Enhance gerrit manager
 * be able to modify refs for dependencies
 * Stream the log file as it can be pretty heavy
-* Make dockerfile location a project property (.packer.json)
+* Use template in mailer
