@@ -53,6 +53,7 @@
             <th>Update Duration</th>
             <th>Refs</th>
             <th>State</th>
+            <th>AutoDeploy</th>
             <th>Action</th>
 
             {{range .builds}}
@@ -71,6 +72,7 @@
                 <td>{{.UpdateWorkerDuration}}</td>
                 <td>{{.Commit}}</td>
                 <td>{{.State}}</td>
+                <td>{{.Deploy}}</td>
                 <td>
                 {{if .IsDownloadable}}
                 <input class="btn btn-primary" type="button" onclick="location.href='/projects/{{.ProjectToBuild.Name}}/builds/{{.ID.Hex}}/download';" value="Download" />
