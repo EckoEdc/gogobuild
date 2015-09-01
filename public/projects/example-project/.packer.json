@@ -1,6 +1,6 @@
 {
     "BuildType" : "Docker",
-    "BuildInstructions" : { "Win32" : [
+    "BuildInstructions" : { "win32" : [
         "git clone https://gerrit-ring.savoirfairelinux.com/ring-daemon ring-daemon",
         "cd ring-daemon/contrib",
         "mkdir native",
@@ -35,17 +35,23 @@
         "sudo mv ring-windows-nightly.exe /output"
         ]},
     "UpdateInstructions" : {
-        "Win32" : [
+        "win32" : [
             "sudo reflector --verbose --country 'Canada' -l 200 --sort rate --save /etc/pacman.d/mirrorlist",
             "yaourt -Syua --noconfirm"
         ]},
     "ReviewType": "Gerrit",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
     "Package" : {
-        "Win32" : "ring-windows-nightly.exe"
-    },
+            "win32" : "ring-windows-nightly.exe"
+        },
     "ReloadProjectCmd" : [
-        "git checkout packaging",
-        "git pull"
-    ]
+            "git checkout packaging",
+            "git reset --hard origin/packaging",
+            "git pull"
+        ],
+    "AutoDeploySchedule": {
+            "win32": "@midnight"
+        },
+    "DeployScript": "ring-nightly-windows.sh",
+    "NotificationMailAdress": ["Awesome Ring Team", ""]
 }
