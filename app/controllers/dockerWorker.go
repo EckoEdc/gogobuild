@@ -61,6 +61,8 @@ func (d DockerWorker) Run() {
 	}
 	if err != nil {
 		d.logFile.WriteString(err.Error())
+		d.build.State = Fail
+		BMInstance().UpdateBuild(&d.build)
 		return
 	}
 
