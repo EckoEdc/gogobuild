@@ -9,3 +9,4 @@
 * be able to modify refs for dependencies
 * Stream the log file as it can be pretty heavy
 * Use template in mailer
+* Refactor to use ENV variable in docker instead of regexp replacement
