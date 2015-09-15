@@ -273,7 +273,7 @@ func (b *BuildManager) Deploy(build *Build) {
 
 	//Copy output to tmp_folder
 	files, _ := ioutil.ReadDir(output)
-	date := build.Date.Format("200601021504")
+	date := build.Date.Format("20060102150400")
 	re := regexp.MustCompile("(_amd64|_i386|\\.x86_64|\\.i686)?(\\.exe)$")
 	for _, f := range files {
 		exec.Command("cp", output+f.Name(), tmpFolder+"/"+re.ReplaceAllString(f.Name(), "-"+date+"~git"+build.GitCommitID+"$1$2")).Run()
