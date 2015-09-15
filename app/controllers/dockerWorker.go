@@ -241,8 +241,12 @@ func (d *DockerWorker) buildProject(fallBack bool) error {
 	cmds = append(cmds, "-c")
 
 	re := regexp.MustCompile("{{REF_NUMBER}}")
+	releaseNumber := regexp.MustCompile("{{RELEASE_NUMBER}}")
+	releaseString := d.build.Date.Format("200601021504") + "~git" + d.build.GitCommitID
 
-	cmds = append(cmds, re.ReplaceAllString(strings.Join(d.build.ProjectToBuild.Configuration.BuildInstructions[d.targetSys], " && "), d.build.Commit))
+	cmds = append(cmds, releaseNumber.ReplaceAllString(
+		re.ReplaceAllString(strings.Join(d.build.ProjectToBuild.Configuration.BuildInstructions[d.targetSys], " && "), d.build.Commit),
+		releaseString))
 	d.logFile.WriteString(strings.Join(cmds, "\n"))
 	d.logFile.WriteString("\n\n ---OUTPUT---- \n")
 
