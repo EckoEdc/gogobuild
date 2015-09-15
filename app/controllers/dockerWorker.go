@@ -76,12 +76,16 @@ func (d *DockerWorker) buildImage() error {
 	file, err := os.Open(revel.BasePath + "/public/projects/" + d.build.ProjectToBuild.Name + "/docker/" + d.build.TargetSys + "/Dockerfile")
 	if err != nil {
 		d.logFile.WriteString(err.Error())
+		d.build.State = Fail
+		BMInstance().UpdateBuild(&d.build)
 		return err
 	}
 	defer file.Close()
 	fileContent, err := ioutil.ReadAll(file)
 	if err != nil {
 		d.logFile.WriteString(err.Error())
+		d.build.State = Fail
+		BMInstance().UpdateBuild(&d.build)
 		return err
 	}
 	tr := tar.NewWriter(inputbuf)
