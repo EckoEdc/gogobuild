@@ -30,7 +30,7 @@ func (g *GerritManager) GetOpenChanges() ([]string, error) {
 	}
 	var changeNumbers []string
 	for _, change := range changes {
-		changeNumbers = append(changeNumbers, fmt.Sprintf("refs/changes/%d/%d/%d", change.ChangeNumber%100, change.ChangeNumber, len(change.Revisions)))
+		changeNumbers = append(changeNumbers, fmt.Sprintf("refs/changes/%02d/%d/%d", change.ChangeNumber%100, change.ChangeNumber, len(change.Revisions)))
 	}
 	return changeNumbers, nil
 }
