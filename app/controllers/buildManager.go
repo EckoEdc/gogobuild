@@ -106,14 +106,15 @@ func (b *Build) Duration() time.Duration {
 func (b *Build) CreateOutputTar() error {
 
 	output := fmt.Sprintf("%s/public/output/%s/%d/%s/", revel.BasePath, b.ProjectToBuild.Name, b.Date.Unix(), b.TargetSys)
-	tarFile, err := os.Create(output + "/output.tar")
+	outputTarName := fmt.Sprintf("%s-%s~git%s.tar", b.ProjectToBuild.Name, b.TargetSys, b.Commit)
+	tarFile, err := os.Create(fmt.Sprintf("%s/%s", output, outputTarName))
 	if err != nil {
 		return err
 	}
 	tw := tar.NewWriter(tarFile)
 	files, _ := ioutil.ReadDir(output)
 	for _, f := range files {
-		if f.Name() == "output.tar" || f.IsDir() == true {
+		if f.Name() == outputTarName || f.IsDir() == true {
 			continue
 		}
 		fileFD, err := os.Open(output + "/" + f.Name())
