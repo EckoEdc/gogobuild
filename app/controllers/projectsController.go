@@ -24,7 +24,6 @@ func (pc ProjectsController) Index() revel.Result {
 func (pc ProjectsController) Build() revel.Result {
 	var deploy bool
 	if pc.Params.Get("commit") != "master" {
-		pc.Flash.Error("Some men just want to see the world burn (Not Deploying non-master branch)")
 		deploy = false
 	} else {
 		deploy = len(pc.Params.Get("submitDeploy")) > 0
