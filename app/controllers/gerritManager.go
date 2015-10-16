@@ -23,14 +23,14 @@ func (g *GerritManager) Init(p *Project) {
 //TODO: Use the Mergable and title property ??
 func (g *GerritManager) GetOpenChanges() ([]string, error) {
 	query := fmt.Sprintf("project:%s status:open", g.project)
-	changes, err := g.gerritClient.QueryChanges(query, gerrit.QueryChangesOpt{N: 0, Fields: []string{"ALL_REVISIONS"}})
+	changes, err := g.gerritClient.QueryChanges(query, gerrit.QueryChangesOpt{N: 0, Fields: []string{"current_revision"}})
 	if err != nil {
 		log.Println(err.Error())
 		return nil, err
 	}
 	var changeNumbers []string
 	for _, change := range changes {
-		changeNumbers = append(changeNumbers, fmt.Sprintf("refs/changes/%02d/%d/%d", change.ChangeNumber%100, change.ChangeNumber, len(change.Revisions)))
+		changeNumbers = append(changeNumbers, fmt.Sprintf("%s", change.Revisions[change.CurrentRevision].Ref))
 	}
 	return changeNumbers, nil
 }
