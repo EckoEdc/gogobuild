@@ -100,6 +100,7 @@ func (d *DockerWorker) buildImage() error {
 		RmTmpContainer: true,
 		InputStream:    inputbuf,
 		OutputStream:   outputbuf,
+		NoCache:        true,
 	}
 	if err := d.docker.BuildImage(opts); err != nil {
 		d.logFile.WriteString(err.Error())
@@ -128,7 +129,7 @@ func (d *DockerWorker) startBuild() error {
 	var err error
 	//Use fallback image for refs/build
 	useFallbackImage := d.build.Commit != "master"
-	if useFallbackImage == false {
+	if useFallbackImage == false || d.commitToFallback == true {
 		//try to make an up to date image
 		err = d.tryUpdate()
 		if err != nil {
